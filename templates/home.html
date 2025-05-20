@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Sign Recognition</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Traffic Sign Recognition</h1>
+        <p>Train & Test German Traffic Sign Recognition Benchmark</p>
+      </header>
+      <div class="tabs">
+        <button class="tab active" data-tab="train">Train</button>
+        <button class="tab" data-tab="test">Test</button>
+      </div>
+      <!-- Train Tab -->
+      <div class="tab-content active" id="train">
+        <div class="settings-section">
+          <h3>Upload Training Data</h3>
+          <div class="form-group">
+            <label for="train-images">Upload Training Images (ZIP):</label>
+            <input type="file" id="train-images" accept=".zip">
+          </div>
+          <div class="form-group">
+            <label for="train-csv">Upload Training CSV:</label>
+            <input type="file" id="train-csv" accept=".csv">
+          </div>
+        </div>
+        <div class="settings-section">
+          <h3>Model Selection</h3>
+          <div class="form-group">
+            <label for="model-type">Select Model:</label>
+            <select id="model-type">
+              <option value="cnn">Convolutional Neural Network (CNN)</option>
+              <option value="rnn">Recurrent Neural Network (RNN)</option>
+              <option value="svm">Support Vector Machine (SVM)</option>
+              <option value="random_forest">Random Forest</option>
+              <option value="knn">K-Nearest Neighbors (KNN)</option>
+            </select>
+          </div>
+        </div>
+        <div class="settings-section" id="cnn-settings">
+          <h3>CNN Hyperparameters</h3>
+          <div class="hyperparams-grid">
+            <div class="form-group">
+              <label for="cnn-epochs">Epochs:</label>
+              <input type="number" id="cnn-epochs" min="1" max="100" value="10">
+            </div>
+            <div class="form-group">
+              <label for="cnn-batch-size">Batch Size:</label>
+              <input type="number" id="cnn-batch-size" min="8" max="256" value="32">
+            </div>
+            <div class="form-group">
+              <label for="cnn-learning-rate">Learning Rate:</label>
+              <input type="number"
+                     id="cnn-learning-rate"
+                     min="0.0001"
+                     max="0.1"
+                     step="0.0001"
+                     value="0.001">
+            </div>
+            <div class="form-group">
+              <label for="cnn-optimizer">Optimizer:</label>
+              <select id="cnn-optimizer">
+                <option value="adam">Adam</option>
+                <option value="sgd">SGD</option>
+                <option value="rmsprop">RMSprop</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="cnn-dropout">Dropout Rate:</label>
+              <input type="number"
+                     id="cnn-dropout"
+                     min="0.0"
+                     max="0.9"
+                     step="0.1"
+                     value="0.5">
+            </div>
+            <div class="form-group">
+              <label for="cnn-conv-layers">Conv Layers:</label>
+              <input type="number" id="cnn-conv-layers" min="1" max="5" value="3">
+            </div>
+          </div>
+        </div>
+        <div class="settings-section" id="rnn-settings" style="display: none;">
+          <h3>RNN Hyperparameters</h3>
+          <div class="hyperparams-grid">
+            <div class="form-group">
+              <label for="rnn-epochs">Epochs:</label>
+              <input type="number" id="rnn-epochs" min="1" max="100" value="15">
+            </div>
+            <div class="form-group">
+              <label for="rnn-batch-size">Batch Size:</label>
+              <input type="number" id="rnn-batch-size" min="8" max="256" value="32">
+            </div>
+            <div class="form-group">
+              <label for="rnn-learning-rate">Learning Rate:</label>
+              <input type="number"
+                     id="rnn-learning-rate"
+                     min="0.0001"
+                     max="0.1"
+                     step="0.0001"
+                     value="0.001">
+            </div>
+            <div class="form-group">
+              <label for="rnn-lstm-cells">LSTM Cells:</label>
+              <input type="number"
+                     id="rnn-lstm-cells"
+                     min="32"
+                     max="512"
+                     step="32"
+                     value="128">
+            </div>
+            <div class="form-group">
+              <label for="rnn-layers">RNN Layers:</label>
+              <input type="number" id="rnn-layers" min="1" max="5" value="2">
+            </div>
+          </div>
+        </div>
+        <div class="settings-section" id="svm-settings" style="display: none;">
+          <h3>SVM Hyperparameters</h3>
+          <div class="hyperparams-grid">
+            <div class="form-group">
+              <label for="svm-c">C (Regularization):</label>
+              <input type="number" id="svm-c" min="0.1" max="10" step="0.1" value="1.0">
+            </div>
+            <div class="form-group">
+              <label for="svm-kernel">Kernel:</label>
+              <select id="svm-kernel">
+                <option value="rbf">RBF</option>
+                <option value="linear">Linear</option>
+                <option value="poly">Polynomial</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="svm-gamma">Gamma:</label>
+              <select id="svm-gamma">
+                <option value="scale">Scale</option>
+                <option value="auto">Auto</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="settings-section" id="rf-settings" style="display: none;">
+          <h3>Random Forest Hyperparameters</h3>
+          <div class="hyperparams-grid">
+            <div class="form-group">
+              <label for="rf-n-estimators">Number of Trees:</label>
+              <input type="number"
+                     id="rf-n-estimators"
+                     min="10"
+                     max="500"
+                     step="10"
+                     value="100">
+            </div>
+            <div class="form-group">
+              <label for="rf-max-depth">Max Depth:</label>
+              <input type="number" id="rf-max-depth" min="5" max="50" step="5" value="20">
+            </div>
+            <div class="form-group">
+              <label for="rf-min-samples-split">Min Samples Split:</label>
+              <input type="number" id="rf-min-samples-split" min="2" max="20" value="2">
+            </div>
+          </div>
+        </div>
+        <div class="settings-section" id="knn-settings" style="display: none;">
+          <h3>KNN Hyperparameters</h3>
+          <div class="hyperparams-grid">
+            <div class="form-group">
+              <label for="knn-n-neighbors">Number of Neighbors:</label>
+              <input type="number" id="knn-n-neighbors" min="1" max="20" value="5">
+            </div>
+            <div class="form-group">
+              <label for="knn-weights">Weights:</label>
+              <select id="knn-weights">
+                <option value="uniform">Uniform</option>
+                <option value="distance">Distance</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="knn-algorithm">Algorithm:</label>
+              <select id="knn-algorithm">
+                <option value="auto">Auto</option>
+                <option value="ball_tree">Ball Tree</option>
+                <option value="kd_tree">KD Tree</option>
+                <option value="brute">Brute Force</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <button id="start-training-btn">Start Training</button>
+        <div class="loader" id="training-loader"></div>
+        <div class="console" id="training-console">
+          <p>== Training Console ==</p>
+          <p class="info">Load training data and set hyperparameters, then click "Start Training"</p>
+        </div>
+      </div>
+      <!-- Test Tab -->
+      <div class="tab-content" id="test">
+        <div class="form-group">
+          <label for="test-image">Upload Image to Test:</label>
+          <input type="file" id="test-image" accept="image/*">
+        </div>
+        <div class="preview-container">
+          <img id="test-image-preview" class="image-preview" style="display: none;">
+        </div>
+        <div class="form-group">
+          <label for="test-model">Select Model for Testing:</label>
+          <select id="test-model">
+            <option value="cnn">Convolutional Neural Network (CNN)</option>
+            <option value="rnn">Recurrent Neural Network (RNN)</option>
+            <option value="svm">Support Vector Machine (SVM)</option>
+            <option value="random_forest">Random Forest</option>
+            <option value="knn">K-Nearest Neighbors (KNN)</option>
+          </select>
+        </div>
+        <button id="run-test-btn">Run Test</button>
+        <div class="loader" id="test-loader"></div>
+        <div class="result-container" id="test-result">
+          <h3>Test Result</h3>
+          <div class="predicted-label" id="predicted-label">Speed Limit (30km/h)</div>
+          <div class="confidence" id="confidence-score">Confidence: 97.8%</div>
+        </div>
+      </div>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  </body>
+</html>
