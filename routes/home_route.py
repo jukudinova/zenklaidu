@@ -1,61 +1,79 @@
-from flask import request, render_template, redirect, url_for
-from services.training_data import TrainingData
-import os
+from flask import Blueprint, request, render_template, redirect, url_for, current_app, flash
 from werkzeug.utils import secure_filename
+from services.training_data import TrainingData
 from extensions import db
 import pandas as pd
-from config import Config
+import os
+
+home_bp = Blueprint("home", __name__)
 
 
-def home_route(app):
-    @app.route("/")
-    def home():
-        return render_template("home.html")
+@home_bp.route("/")
+def home():
+    return render_template("home.html")
 
-    # Function to check allowed file extensions
-    def allowed_file(filename):
-        return (
-            "." in filename
-            and filename.rsplit(".", 1)[1].lower() in Config.DATABASE_ALLOWED_EXTENSIONS
-        )
 
-    # Route to display the upload form
-    @app.route("/upload_form")
-    def upload_form():
-        return render_template("upload_form.html")
+@home_bp.route("/upload_form")
+def upload_form():
+    return render_template("upload_form.html")
 
-    # Route to handle the uploaded file
-    @app.route("/upload", methods=["POST"])
-    def upload_file():
-        if "file" not in request.files:
-            return redirect(request.url)
-        file = request.files["file"]
 
-        # Check if the file is valid
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-            file.save(filepath)
+def allowed_file(filename):
+    return (
+        "." in filename
+        and filename.rsplit(".", 1)[1].lower() in current_app.config["DATABASE_ALLOWED_EXTENSIONS"]
+    )
 
-            # Process CSV file and insert data into the database
-            try:
-                df = pd.read_csv(filepath)
-                for _, row in df.iterrows():
-                    # Assuming your columns match the ones in the CSV
-                    new_data = TrainingData(
-                        file_name=row["file_name"],
-                        width=row["width"],
-                        height=row["height"],
-                        roi_x1=row["roi_x1"],
-                        roi_y1=row["roi_y1"],
-                        roi_x2=row["roi_x2"],
-                        roi_y2=row["roi_y2"],
-                        class_id=row["class_id"],
-                    )
-                    db.session.add(new_data)
-                db.session.commit()
-                return "File successfully uploaded and data added to the database."
-            except Exception as e:
-                return f"An error occurred: {e}"
 
-        return "Invalid file format. Please upload a CSV file."
+@home_bp.route("/upload", methods=["POST"])
+def upload_file():
+    if "file" not in request.files:
+        flash("No file part in request.")
+        return redirect(url_for("home.upload_form"))
+
+    file = request.files["file"]
+
+    if file.filename == "":
+        flash("No selected file.")
+        return redirect(url_for("home.upload_form"))
+
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
+        file.save(filepath)
+
+        try:
+            df = pd.read_csv(filepath)
+
+            required_columns = [
+                "file_name", "width", "height", 
+                "roi_x1", "roi_y1", "roi_x2", "roi_y2", "class_id"
+            ]
+            if not all(col in df.columns for col in required_columns):
+                flash("CSV file is missing required columns.")
+                return redirect(url_for("home.upload_form"))
+
+            for _, row in df.iterrows():
+                new_data = TrainingData(
+                    file_name=row["file_name"],
+                    width=row["width"],
+                    height=row["height"],
+                    roi_x1=row["roi_x1"],
+                    roi_y1=row["roi_y1"],
+                    roi_x2=row["roi_x2"],
+                    roi_y2=row["roi_y2"],
+                    class_id=row["class_id"],
+                )
+                db.session.add(new_data)
+
+            db.session.commit()
+            flash("File successfully uploaded and data added.")
+            return redirect(url_for("home.home"))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error processing file: {e}")
+            return redirect(url_for("home.upload_form"))
+
+    flash("Invalid file format. Only CSV files allowed.")
+    return redirect(url_for("home.upload_form"))

@@ -1,22 +1,20 @@
-from flask import Flask, redirect, url_for
+from flask import Flask
 from config import Config
 from extensions import db, migrate
-from routes.home_route import home_route
-from services.training_data import TrainingData
+from routes.home_route import home_bp  # Blueprint tvarkesnis kelio registravimas
 
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object(Config)
 
-app = Flask(__name__)
-app.config.from_object(Config)
-db.init_app(app)
-migrate.init_app(app, db)
+    db.init_app(app)
+    migrate.init_app(app, db)
 
-@app.errorhandler(404)
-def page_not_found(e):
-    return redirect(url_for("home"))
+    # Blueprint
+    app.register_blueprint(home_bp)
 
-
-home_route(app)
-
+    return app
 
 if __name__ == "__main__":
+    app = create_app()
     app.run(debug=True)
